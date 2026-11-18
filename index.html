@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="pt-BR">
+<!-- Painel de resultados · v1.0 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel de resultados · 1º a 3º bimestre 2026</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f3f2ee; --surface: #fcfcfb; --surface-2: #f0efec; --line: #dcdad3; --line-soft: #e8e6e0;
+  --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #75736d;
+  --accent: #1c5cab; --accent-ink: #ffffff;
+  --crit: #d03b3b; --crit-text: #a82424; --warn: #fab219; --warn-text: #7a5200; --good: #0ca30c; --good-text: #006300;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --surface-2: #242422; --line: #3a3a37; --line-soft: #2c2c2a;
+    --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #9a998f;
+    --accent: #3987e5; --crit-text: #ff8a85; --warn-text: #fab219; --good-text: #4fcf4f;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--font); }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { text-wrap: balance; letter-spacing: -0.01em; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* login */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 2rem 1rem; }
+.login-card { width: min(100%, 26rem); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1.6rem; display: grid; gap: 1rem; }
+.login-card h1 { font-size: 1.5rem; }
+.login-card .sub { color: var(--ink-2); font-size: 0.9rem; }
+.login-card label { font-size: 0.8rem; font-weight: 600; color: var(--ink-2); display: block; margin-bottom: 0.3rem; }
+.login-card input, .login-card select { width: 100%; padding: 0.6rem 0.7rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.btn { border: 0; border-radius: 6px; padding: 0.6rem 1rem; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-ink); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 0.35rem 0.8rem; cursor: pointer; }
+.erro { color: var(--crit-text); font-weight: 600; font-size: 0.9rem; }
+.privado { font-size: 0.8rem; color: var(--ink-3); }
+
+/* topo e filtros */
+.top { background: var(--surface); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; align-items: center; justify-content: space-between; padding-block: 0.9rem; }
+.top h1 { font-size: 1.35rem; }
+.top p { color: var(--ink-2); font-size: 0.88rem; }
+.controls { position: sticky; top: 0; z-index: 10; background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.controls .wrap { display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: center; padding-block: 0.6rem; }
+.ctl { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.ctl > span:not(.regra-nota) { font-size: 0.78rem; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 0.32rem 0.75rem; cursor: pointer; border-right: 1px solid var(--line); white-space: nowrap; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); font-weight: 600; }
+.regra-nota { font-size: 0.8rem; color: var(--ink-3); }
+
+main { padding-block: 1.1rem 3rem; }
+main .wrap { display: grid; gap: 1.1rem; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.15rem 1.15rem; display: grid; gap: 0.8rem; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; align-items: baseline; justify-content: space-between; }
+.panel h2 { font-size: 1.12rem; }
+.panel .sub { font-size: 0.84rem; color: var(--ink-2); }
+
+/* KPIs */
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.8rem; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0.75rem 0.9rem; min-width: 0; }
+.kpi span { display: block; font-size: 0.82rem; color: var(--ink-2); line-height: 1.25; }
+.kpi strong { display: block; font-size: 1.9rem; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.kpi small { display: block; font-size: 0.78rem; color: var(--ink-3); }
+#k-media { font-size: clamp(1.05rem, 1.7vw, 1.3rem); line-height: 1.6; white-space: nowrap; }
+.kpi.crit { box-shadow: inset 0 3px 0 var(--crit); }
+.kpi.warn { box-shadow: inset 0 3px 0 var(--warn); }
+.kpi.good { box-shadow: inset 0 3px 0 var(--good); }
+
+.insights ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; max-width: 120ch; }
+.insights b { font-weight: 600; }
+
+/* mapa de calor */
+.heat-box { overflow-x: auto; }
+.heat { border-collapse: separate; border-spacing: 3px; width: 100%; min-width: 760px; }
+.heat th { font-size: 0.78rem; font-weight: 600; color: var(--ink-2); padding: 0.2rem 0.3rem; text-align: center; vertical-align: bottom; line-height: 1.2; }
+.heat th.row { text-align: left; white-space: nowrap; font-size: 0.86rem; color: var(--ink); vertical-align: middle; }
+.heat tr.sel th.row { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.heat td { border-radius: 6px; padding: 0.38rem 0.3rem; text-align: center; cursor: pointer; min-width: 4.6rem; position: relative; }
+.heat td:hover { outline: 2px solid var(--ink); outline-offset: -2px; }
+.heat td .m { display: block; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.heat td .c { display: block; font-size: 0.72rem; min-height: 1em; font-variant-numeric: tabular-nums; }
+.heat td.tot, .heat th.tot { border-left: 0; }
+.heat tr.escola th.row { color: var(--ink-2); font-weight: 600; }
+.ramp { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--ink-2); flex-wrap: wrap; }
+.ramp i { display: inline-block; width: 1.4rem; height: 0.8rem; border-radius: 3px; }
+
+/* trajetórias */
+.legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.82rem; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.legend i { width: 1.1rem; height: 3px; border-radius: 2px; display: inline-block; }
+.multiples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem 1.2rem; }
+.mult h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.15rem; }
+.mult svg { width: 100%; height: auto; display: block; overflow: visible; }
+.mult .grid line { stroke: var(--line-soft); }
+.mult .grid text, .mult .xax text { fill: var(--ink-3); font-size: 10px; }
+.mult .seis { stroke: var(--ink-3); stroke-dasharray: 3 3; }
+.mult .ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.mult .pt { stroke: var(--surface); stroke-width: 2; }
+.mult .fade { opacity: 0.18; }
+.mult .lbl { font-size: 10.5px; fill: var(--ink-2); font-weight: 600; }
+
+/* prioridades */
+.prio { display: grid; gap: 0; }
+.prio-row { display: grid; grid-template-columns: minmax(0, 16rem) 4.2rem minmax(0, 1fr); gap: 0.4rem 0.9rem; padding: 0.55rem 0.2rem; border-bottom: 1px solid var(--line-soft); align-items: start; }
+.prio-row:last-child { border-bottom: 0; }
+.nome-btn { background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.nome-btn:hover { text-decoration-color: var(--ink); }
+.prio-row .turma { font-size: 0.85rem; color: var(--ink-2); }
+.prio-row .resumo { font-size: 0.78rem; color: var(--ink-2); display: block; margin-top: 0.1rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.chip { display: inline-flex; align-items: baseline; gap: 0.35rem; font-size: 0.8rem; padding: 0.18rem 0.5rem; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; }
+.chip.rec { border-color: color-mix(in oklab, var(--crit) 55%, var(--line)); background: color-mix(in oklab, var(--crit) 10%, var(--surface)); }
+.chip.aten { border-color: color-mix(in oklab, var(--warn) 70%, var(--line)); background: color-mix(in oklab, var(--warn) 14%, var(--surface)); }
+.chip b { font-weight: 600; }
+.chip .tr { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ic { font-size: 0.7rem; }
+.ic.rec { color: var(--crit); } .ic.aten { color: var(--warn); } .ic.ok { color: var(--good); }
+.mais { justify-self: start; }
+
+/* tabela completa */
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; align-items: center; }
+.toolbar input[type="search"], .toolbar select { border: 1px solid var(--line); border-radius: 6px; padding: 0.38rem 0.55rem; background: var(--surface); }
+.toolbar input[type="search"] { width: 16rem; max-width: 100%; }
+.toolbar label.check { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.88rem; cursor: pointer; }
+.matrix-box { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: 8px; }
+.matrix { border-collapse: separate; border-spacing: 0; font-size: 0.84rem; width: 100%; }
+.matrix th, .matrix td { padding: 0.32rem 0.5rem; border-bottom: 1px solid var(--line-soft); background: var(--surface); white-space: nowrap; }
+.matrix thead th { position: sticky; top: 0; z-index: 2; font-size: 0.74rem; color: var(--ink-2); font-weight: 600; text-align: center; white-space: normal; line-height: 1.15; vertical-align: bottom; border-bottom: 1px solid var(--line); }
+.matrix .aluno { position: sticky; left: 0; z-index: 1; text-align: left; min-width: 15rem; border-right: 1px solid var(--line); }
+.matrix thead .aluno { z-index: 3; text-align: left; }
+.matrix .aluno small { display: block; color: var(--ink-3); font-size: 0.74rem; font-weight: 400; }
+.matrix td.n { text-align: center; font-variant-numeric: tabular-nums; }
+.matrix td.n.rec { background: color-mix(in oklab, var(--crit) 16%, var(--surface)); color: var(--crit-text); font-weight: 700; }
+.matrix td.n.aten { background: color-mix(in oklab, var(--warn) 22%, var(--surface)); font-weight: 600; }
+.matrix td.n.gar { color: var(--good-text); }
+.matrix td.n.ok { color: var(--ink-2); }
+.matrix td.q { text-align: center; font-weight: 700; }
+.matrix td.q.tem { color: var(--crit-text); }
+.note { font-size: 0.8rem; color: var(--ink-3); }
+.empty { padding: 1.2rem; text-align: center; color: var(--ink-2); border: 1px dashed var(--line); border-radius: 8px; }
+
+/* conferência */
+.avisos { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.3rem; font-size: 0.88rem; }
+.avisos b { font-weight: 600; }
+
+/* ficha */
+dialog#ficha { border: 1px solid var(--line); border-radius: 12px; padding: 0; width: min(96vw, 860px); background: var(--surface); color: var(--ink); }
+dialog#ficha::backdrop { background: rgba(10, 10, 10, 0.45); }
+.ficha-in { padding: 1.2rem 1.3rem 1.3rem; display: grid; gap: 0.9rem; }
+.ficha-head { display: flex; justify-content: space-between; gap: 1rem; align-items: start; flex-wrap: wrap; }
+.ficha-head h2 { font-size: 1.25rem; }
+.ficha-head p { color: var(--ink-2); font-size: 0.88rem; }
+.ficha-acoes { display: flex; gap: 0.5rem; }
+.ficha table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.ficha th { text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); font-weight: 600; padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--line); }
+.ficha td { padding: 0.42rem 0.4rem; border-bottom: 1px solid var(--line-soft); }
+.ficha td.c, .ficha th.c { text-align: center; font-variant-numeric: tabular-nums; }
+.ficha td.prec { font-weight: 700; }
+.ficha tr.rec td.prec { color: var(--crit-text); }
+.ficha .spark { width: 70px; height: 22px; display: block; }
+.ficha .spark polyline { fill: none; stroke: var(--ink-2); stroke-width: 1.6; }
+.ficha .spark circle { fill: var(--ink); }
+.ficha .spark line { stroke: var(--line); stroke-dasharray: 2 2; }
+.ficha-pe { font-size: 0.8rem; color: var(--ink-3); }
+
+#tip { position: fixed; z-index: 50; pointer-events: none; background: var(--ink); color: var(--surface); font-size: 0.8rem; line-height: 1.35; padding: 0.4rem 0.55rem; border-radius: 6px; max-width: 20rem; white-space: pre-line; }
+footer { font-size: 0.8rem; color: var(--ink-3); padding-block: 0 2rem; }
+
+@media (max-width: 1000px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } .multiples { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .multiples { grid-template-columns: minmax(0, 1fr); }
+  .prio-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .prio-row .chips { grid-column: 1 / -1; }
+  .controls { position: static; }
+}
+@media print {
+  body.imprimindo > *:not(dialog) { display: none !important; }
+  body.imprimindo dialog#ficha { position: static; width: 100%; max-width: none; border: 0; box-shadow: none; }
+  body.imprimindo .ficha-acoes { display: none; }
+  :root { color-scheme: light; --surface: #fff; --ink: #000; --crit-text: #a82424; }
+}
+</style>
+
+<section id="login" class="login">
+  <form class="login-card" id="login-form" autocomplete="off">
+    <div>
+      <h1>Painel de resultados</h1>
+      <p class="sub">Escola Municipal Romão Ferreira de Azevedo · 6º ao 9º Ano · 1º a 3º bimestre de 2026</p>
+    </div>
+    <div><label for="usuario">Usuário</label><select id="usuario" required><option value="">Selecione</option><option>Escola Romão Ferreira de Azevedo</option></select></div>
+    <div><label for="senha">Senha</label><input id="senha" type="password" inputmode="numeric" autocomplete="current-password" required></div>
+    <p id="erro" class="erro" role="alert" hidden></p>
+    <button id="entrar" class="btn" type="submit">Entrar</button>
+    <p class="privado">Os dados ficam cifrados neste arquivo e só são abertos aqui, no seu navegador, com a senha.</p>
+  </form>
+</section>
+
+<div id="app" hidden>
+<header class="top">
+  <div class="wrap">
+    <div><h1>Painel de resultados</h1><p>Escola Municipal Romão Ferreira de Azevedo · 6º ao 9º Ano · 1º a 3º bimestre de 2026 · dados de 18/11/2026</p></div>
+    <button id="sair" class="btn-ghost" type="button">Sair</button>
+  </div>
+</header>
+<nav class="controls" aria-label="Filtros">
+  <div class="wrap">
+    <div class="ctl"><span>Turma</span><div class="seg" id="f-turma"></div></div>
+    <div class="ctl"><span>Regra</span><div class="seg" id="f-regra">
+      <button type="button" data-r="225" aria-pressed="true">22,5 pontos</button><button type="button" data-r="240" aria-pressed="false">24 pontos</button></div>
+      <span class="regra-nota" id="regra-nota"></span></div>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <section class="kpis" aria-label="Indicadores">
+      <div class="kpi"><span>Estudantes</span><strong id="k-alunos">0</strong><small id="k-alunos-s"></small></div>
+      <div class="kpi crit"><span>Em recuperação</span><strong id="k-rec">0</strong><small id="k-rec-s"></small></div>
+      <div class="kpi crit"><span>Casos de recuperação</span><strong id="k-casos">0</strong><small>estudante × disciplina</small></div>
+      <div class="kpi warn"><span>Casos em atenção</span><strong id="k-aten">0</strong><small>precisam de 8 a 10 no 4º</small></div>
+      <div class="kpi good"><span>Já garantidos em tudo</span><strong id="k-gar">0</strong><small id="k-gar-s"></small></div>
+      <div class="kpi"><span>Média geral por bimestre</span><strong id="k-media" class="num">–</strong><small>1º → 2º → 3º</small></div>
+    </section>
+
+    <section class="panel insights" aria-label="Leitura rápida">
+      <h2>Leitura rápida</h2>
+      <ul id="insights"></ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Mapa da escola: turma × disciplina</h2><span class="sub">média atual (1º a 3º) e casos; clique numa célula para ver os estudantes</span></div>
+      <div class="heat-box"><table class="heat" id="heat"></table></div>
+      <div class="ramp" id="ramp"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Trajetórias: média da turma por bimestre</h2><span class="sub">linha tracejada = média 6</span></div>
+      <div class="legend" id="leg-traj"></div>
+      <div class="multiples" id="traj"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2 id="prio-titulo">Prioridades</h2><span class="sub">quem tem disciplinas em recuperação ou atenção, dos casos mais graves para os mais leves; clique no nome para abrir a ficha</span></div>
+      <div class="prio" id="prio"></div>
+      <button class="btn-ghost mais" id="prio-mais" type="button" hidden></button>
+    </section>
+
+    <section class="panel" id="sec-tabela">
+      <div class="panel-head"><h2>Nota necessária no 4º bimestre</h2><span class="sub" id="tab-sub"></span></div>
+      <div class="toolbar">
+        <input id="t-busca" type="search" placeholder="Buscar estudante" aria-label="Buscar estudante">
+        <select id="t-disc" aria-label="Disciplina"><option value="">Todas as disciplinas</option></select>
+        <label class="check"><input id="t-risco" type="checkbox"> Só recuperação ou atenção</label>
+      </div>
+      <div id="tabela"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Conferência dos dados</h2><span class="sub">diferenças entre os boletins e as atas do sistema</span></div>
+      <div id="conf"></div>
+    </section>
+  </div>
+</main>
+<footer><div class="wrap" id="rodape"></div></footer>
+</div>
+
+<dialog id="ficha" aria-labelledby="ficha-nome"><div class="ficha-in ficha" id="ficha-in"></div></dialog>
+<div id="tip" hidden></div>
+
+<script>
+const PACOTE = {"sal": "yl88oxagOgcVnuYapk3aQQ==", "iv": "bTidu/raiyKDBnyv", "ct": "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", "iteracoes": 600000};
+const $ = id => document.getElementById(id);
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const nf1 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const n1 = v => v === null || v === undefined || Number.isNaN(v) ? "–" : nf1.format(v);
+const t1 = d => n1(d / 10);                 // décimos -> "7,5"
+const tr = r => r === 240 ? "24" : "22,5";  // regra por extenso
+const num = n => n.toLocaleString("pt-BR");
+const pct = (a, b) => b ? new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(100 * a / b) + "%" : "–";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const nomeProprio = s => s.toLocaleLowerCase("pt-BR").replace(/(^|\s)(\p{L})/gu, (m, a, b) => a + b.toLocaleUpperCase("pt-BR")).replace(/\b(Da|De|Do|Das|Dos|E)\b/g, w => w.toLowerCase());
+
+async function abrir(senha) {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(senha), "PBKDF2", false, ["deriveKey"]);
+  const chave = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(PACOTE.sal), iterations: PACOTE.iteracoes, hash: "SHA-256" },
+    base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const bruto = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(PACOTE.iv) }, chave, b64(PACOTE.ct));
+  return new Response(new Blob([bruto]).stream().pipeThrough(new DecompressionStream("gzip"))).json();
+}
+
+// ---------- estado ----------
+let D, AL = [], NT = 0, ND = 0;
+const E = { turma: null, regra: 225, disc: null, busca: "", risco: false, prioTodos: false };
+const SERIE = ["--s1", "--s2", "--s3", "--s4"];
+
+function preparar(dados) {
+  D = dados; NT = D.turmas.length; ND = D.disciplinas.length;
+  AL = D.alunos.map((a, i) => ({ i, nome: nomeProprio(a.n), t: a.t, f: a.f, g: a.g.map(([b1, b2, b3, fr]) => ({ b: [b1, b2, b3], ok: b1 !== null && b2 !== null && b3 !== null, s: (b1 || 0) + (b2 || 0) + (b3 || 0), fr })) }))
+    .sort((a, b) => a.t - b.t || a.nome.localeCompare(b.nome, "pt-BR"));
+  AL.forEach(a => { a.busca = a.nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); });
+}
+
+// Situação de uma nota com a regra atual: precisa = regra − soma (em décimos).
+function sit(g, regra = E.regra) {
+  if (!g.ok) return { st: "sem", prec: null };
+  const prec = regra - g.s;
+  return { prec, st: prec > 100 ? "rec" : prec >= 80 ? "aten" : prec <= 0 ? "gar" : "ok" };
+}
+const ROT = { rec: "recuperação", aten: "atenção", ok: "pode alcançar", gar: "já garantido", sem: "sem nota" };
+const ICON = { rec: "●", aten: "▲", ok: "", gar: "✓", sem: "" };
+
+function resumoAluno(a, regra = E.regra) {
+  let rec = 0, aten = 0, gar = 0, peso = 0;
+  const casos = [];
+  a.g.forEach((g, d) => {
+    const s = sit(g, regra);
+    if (s.st === "rec") { rec++; peso += s.prec; casos.push({ d, ...s, g }); }
+    else if (s.st === "aten") { aten++; peso += s.prec / 10; casos.push({ d, ...s, g }); }
+    else if (s.st === "gar") gar++;
+  });
+  casos.sort((x, y) => y.prec - x.prec);
+  return { rec, aten, gar, peso, casos, tudo: gar === a.g.filter(g => g.ok).length };
+}
+
+const alunosFiltro = () => AL.filter(a => E.turma === null || a.t === E.turma);
+
+// ---------- filtros ----------
+function montarFiltros() {
+  const seg = $("f-turma");
+  seg.innerHTML = `<button type="button" data-t="">Todas</button>` + D.turmas.map((t, k) => `<button type="button" data-t="${k}">${esc(t.nome)}</button>`).join("");
+  seg.addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b) return; E.turma = b.dataset.t === "" ? null : +b.dataset.t; E.prioTodos = false; render(); });
+  $("f-regra").addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b) return; E.regra = +b.dataset.r; render(); });
+  $("t-disc").innerHTML = `<option value="">Todas as disciplinas</option>` + D.disciplinas.map((d, k) => `<option value="${k}">${esc(d)}</option>`).join("");
+  $("t-disc").addEventListener("change", () => { E.disc = $("t-disc").value === "" ? null : +$("t-disc").value; tabela(); });
+  $("t-busca").addEventListener("input", () => { E.busca = $("t-busca").value.trim().normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); tabela(); });
+  $("t-risco").addEventListener("change", () => { E.risco = $("t-risco").checked; tabela(); });
+}
+function syncFiltros() {
+  $("f-turma").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.t === "" ? null : +b.dataset.t) === E.turma)));
+  $("f-regra").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.r === E.regra)));
+  $("regra-nota").textContent = E.regra === 225
+    ? "média final arredondada para cima no meio ponto, como o sistema calcula (5,625 vira 6,0)"
+    : "sem arredondamento: soma de 24 nos quatro bimestres (visão mais conservadora)";
+}
+
+// ---------- KPIs e leitura ----------
+function kpis(lista) {
+  const R = lista.map(a => resumoAluno(a));
+  const emRec = R.filter(r => r.rec).length, casos = R.reduce((n, r) => n + r.rec, 0), aten = R.reduce((n, r) => n + r.aten, 0), gar = R.filter(r => r.tudo).length;
+  $("k-alunos").textContent = num(lista.length);
+  $("k-alunos-s").textContent = E.turma === null ? `${NT} turmas` : D.turmas[E.turma].nome;
+  $("k-rec").textContent = num(emRec);
+  $("k-rec-s").textContent = `${pct(emRec, lista.length)} com ao menos 1 disciplina`;
+  $("k-casos").textContent = num(casos);
+  $("k-aten").textContent = num(aten);
+  $("k-gar").textContent = num(gar);
+  $("k-gar-s").textContent = `${pct(gar, lista.length)} já somam ${tr(E.regra)} em todas`;
+  const m = [0, 1, 2].map(k => { let s = 0, c = 0; lista.forEach(a => a.g.forEach(g => { if (g.b[k] !== null) { s += g.b[k]; c++; } })); return c ? s / c / 10 : null; });
+  $("k-media").textContent = m.map(n1).join(" → ");
+  return R;
+}
+
+function insights(lista, R) {
+  const it = [];
+  const emRec = R.filter(r => r.rec).length, casos = R.reduce((n, r) => n + r.rec, 0);
+  if (emRec) it.push(`<b>${num(emRec)} estudantes (${pct(emRec, lista.length)})</b> não alcançam ${tr(E.regra)} pontos em pelo menos uma disciplina nem com 10 no 4º bimestre: já dependem da recuperação ou do exame final.`);
+  else it.push(`Nenhum estudante está em recuperação com a regra de ${tr(E.regra)} pontos.`);
+  const crit = R.filter(r => r.rec >= 3).length;
+  if (crit) it.push(`<b>${num(crit)} ${crit > 1 ? "estudantes estão" : "estudante está"}</b> em recuperação em 3 ou mais disciplinas: casos para busca ativa, conversa com a família e plano individual.`);
+  const porDisc = D.disciplinas.map((d, k) => ({ d, k, rec: lista.filter(a => sit(a.g[k]).st === "rec").length, aten: lista.filter(a => sit(a.g[k]).st === "aten").length }));
+  const top = [...porDisc].sort((a, b) => b.rec - a.rec)[0];
+  if (top && top.rec && casos) it.push(`<b>${esc(top.d)}</b> concentra ${num(top.rec)} dos ${num(casos)} casos de recuperação${top.aten ? ` e tem mais ${num(top.aten)} em atenção` : ""}.`);
+  if (E.turma === null) {
+    const pt = D.turmas.map((t, k) => { const l = lista.filter(a => a.t === k); return { t, n: l.length, r: l.filter(a => resumoAluno(a).rec).length }; }).filter(x => x.n).sort((a, b) => b.r / b.n - a.r / a.n)[0];
+    if (pt && pt.r) it.push(`A turma com maior proporção em recuperação é o <b>${esc(pt.t.nome)}</b>: ${num(pt.r)} de ${num(pt.n)} estudantes (${pct(pt.r, pt.n)}).`);
+  }
+  const aten = R.reduce((n, r) => n + r.aten, 0);
+  if (aten) it.push(`<b>${num(aten)} casos</b> precisam de 8 a 10 no 4º bimestre: é onde reforço agora ainda muda o resultado.`);
+  const outra = E.regra === 225 ? 240 : 225;
+  const casosOutra = lista.reduce((n, a) => n + resumoAluno(a, outra).rec, 0), atenOutra = lista.reduce((n, a) => n + resumoAluno(a, outra).aten, 0);
+  if (casosOutra !== casos || atenOutra !== aten) it.push(`Com a regra de ${tr(outra)} pontos, seriam ${num(casosOutra)} casos de recuperação e ${num(atenOutra)} em atenção (agora: ${num(casos)} e ${num(aten)}).`);
+  else it.push(`A regra de ${tr(outra)} pontos não muda os casos de recuperação nem de atenção neste filtro.`);
+  const var13 = D.disciplinas.map((d, k) => { const l = lista.filter(a => a.g[k].ok); if (l.length < 8) return null;
+    const m = j => l.reduce((s, a) => s + a.g[k].b[j], 0) / l.length / 10; return { d, a: m(0), c: m(2), dl: m(2) - m(0) }; }).filter(Boolean).sort((a, b) => a.dl - b.dl);
+  if (var13.length && var13[0].dl <= -0.5) it.push(`Maior queda de média do 1º para o 3º bimestre: <b>${esc(var13[0].d)}</b> (${n1(var13[0].a)} → ${n1(var13[0].c)}).`);
+  const alta = var13[var13.length - 1];
+  if (alta && alta.dl >= 0.5) it.push(`Maior alta: <b>${esc(alta.d)}</b> (${n1(alta.a)} → ${n1(alta.c)}).`);
+  if (D.avisos.length) it.push(`Há <b>${num(D.avisos.length)} pontos de conferência</b> entre boletins e atas (ver o fim da página).`);
+  $("insights").innerHTML = it.map(s => `<li>${s}</li>`).join("");
+}
+
+// ---------- mapa de calor ----------
+function corRisco(f) {  // uma só matiz: vermelho, do fundo neutro ao forte
+  if (!f) return { bg: "var(--surface-2)", fg: "var(--ink)" };
+  const p = Math.round(18 + 72 * Math.min(1, f / 0.5));
+  return { bg: `color-mix(in oklab, var(--crit) ${p}%, var(--surface-2))`, fg: p >= 55 ? "#fff" : "var(--ink)" };
+}
+function celula(lista, k, rotulo) {
+  const ks = k === null ? [...Array(ND).keys()] : [k];
+  let s = 0, c = 0, rec = 0, aten = 0, n = 0;
+  lista.forEach(a => ks.forEach(d => { const g = a.g[d]; if (!g.ok) return; s += g.s; c++; n++; const st = sit(g).st; if (st === "rec") rec++; else if (st === "aten") aten++; }));
+  const f = n ? (rec + aten) / n : 0, cor = corRisco(f);
+  const media = c ? s / c / 30 : null;
+  const txt = [rec ? `${rec} rec.` : "", aten ? `${aten} at.` : ""].filter(Boolean).join(" · ");
+  const tip = `${rotulo}\nmédia atual (1º a 3º): ${n1(media)}\nrecuperação: ${rec} · atenção: ${aten} · de ${n} ${k === null ? "notas" : "estudantes"}`;
+  return `<td style="background:${cor.bg};color:${cor.fg}" data-tip="${esc(tip)}" ${k === null ? "" : `data-d="${k}"`}><span class="m">${n1(media)}</span><span class="c">${txt}</span></td>`;
+}
+function heat() {
+  const linhas = D.turmas.map((t, k) => {
+    const l = AL.filter(a => a.t === k);
+    return `<tr data-t="${k}" class="${E.turma === k ? "sel" : ""}"><th class="row" scope="row">${esc(t.nome)} <small class="note">(${l.length})</small></th>` +
+      D.disciplinas.map((d, j) => celula(l, j, `${t.nome} · ${d}`)).join("") + celula(l, null, `${t.nome} · todas as disciplinas`) + `</tr>`;
+  });
+  const esc_ = `<tr class="escola" data-t=""><th class="row" scope="row">Escola</th>` + D.disciplinas.map((d, j) => celula(AL, j, `Escola · ${d}`)).join("") + celula(AL, null, "Escola · todas") + `</tr>`;
+  $("heat").innerHTML = `<thead><tr><th></th>${D.disciplinas.map(d => `<th scope="col">${esc(d)}</th>`).join("")}<th scope="col">Todas</th></tr></thead><tbody>${linhas.join("")}${esc_}</tbody>`;
+  $("ramp").innerHTML = `<span>Cor: % de notas em recuperação ou atenção</span>` + [0, 0.1, 0.25, 0.4, 0.5].map(f => { const c = corRisco(f); return `<span style="display:inline-flex;gap:.3rem;align-items:center"><i style="background:${c.bg};border:1px solid var(--line)"></i>${f ? pct(f, 1) + (f === 0.5 ? " ou mais" : "") : "nenhuma"}</span>`; }).join("") +
+    `<span>· “rec.” = recuperação, “at.” = atenção</span>`;
+}
+$("heat").addEventListener("click", ev => {
+  const td = ev.target.closest("td"); if (!td) return;
+  const tr = td.closest("tr");
+  E.turma = tr.dataset.t === "" ? null : +tr.dataset.t;
+  E.disc = td.dataset.d === undefined ? null : +td.dataset.d;
+  $("t-disc").value = E.disc === null ? "" : String(E.disc);
+  E.risco = true; $("t-risco").checked = true;
+  render();
+  $("sec-tabela").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+// ---------- trajetórias ----------
+function trajetorias() {
+  const W = 300, H = 150, ml = 26, mr = 34, mt = 8, mb = 20;
+  const medias = D.disciplinas.map((d, k) => D.turmas.map((t, j) => [0, 1, 2].map(b => {
+    const v = AL.filter(a => a.t === j && a.g[k].b[b] !== null).map(a => a.g[k].b[b]);
+    return v.length ? v.reduce((x, y) => x + y, 0) / v.length / 10 : null; })));
+  let lo = 10; medias.flat(2).forEach(v => { if (v !== null) lo = Math.min(lo, v); });
+  const yMin = Math.min(5, Math.floor(lo));
+  const x = i => ml + i * (W - ml - mr) / 2, y = v => mt + (10 - v) * (H - mt - mb) / (10 - yMin);
+  const ticks = []; for (let v = yMin; v <= 10; v += (10 - yMin > 6 ? 2 : 1)) ticks.push(v);
+  $("leg-traj").innerHTML = D.turmas.map((t, j) => `<span><i style="background:var(${SERIE[j]})"></i>${esc(t.nome)}</span>`).join("") + (E.turma !== null ? `<span>· em destaque: ${esc(D.turmas[E.turma].nome)}</span>` : "");
+  $("traj").innerHTML = D.disciplinas.map((d, k) => {
+    const grid = ticks.map(v => `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text x="${ml - 6}" y="${y(v) + 3.5}" text-anchor="end">${v}</text>`).join("");
+    const ordem = D.turmas.map((t, j) => j).sort((a, b) => (a === E.turma) - (b === E.turma));
+    const linhas = ordem.map(j => {
+      const v = medias[k][j], fade = E.turma !== null && E.turma !== j ? "fade" : "";
+      const pts = v.map((m, i) => m === null ? null : [x(i), y(m)]).filter(Boolean);
+      return `<g class="${fade}"><polyline class="ln" style="stroke:var(${SERIE[j]})" points="${pts.map(p => p.join(",")).join(" ")}"/>` +
+        v.map((m, i) => m === null ? "" : `<circle class="pt" r="4.5" cx="${x(i)}" cy="${y(m)}" style="fill:var(${SERIE[j]})" data-tip="${esc(`${D.turmas[j].nome} · ${d}\n${i + 1}º bimestre: média ${n1(m)}`)}"/>`).join("") + `</g>`;
+    }).join("");
+    // rótulos no fim das linhas, afastados para não colidir
+    const fim = D.turmas.map((t, j) => ({ j, y: medias[k][j][2] === null ? null : y(medias[k][j][2]) })).filter(o => o.y !== null).sort((a, b) => a.y - b.y);
+    for (let i = 1; i < fim.length; i++) if (fim[i].y - fim[i - 1].y < 11) fim[i].y = fim[i - 1].y + 11;
+    const rot = fim.map(o => `<text class="lbl ${E.turma !== null && E.turma !== o.j ? "fade" : ""}" x="${x(2) + 8}" y="${o.y + 3.5}">${esc(D.turmas[o.j].nome.replace(" Ano", ""))}</text>`).join("");
+    const xax = [0, 1, 2].map(i => `<text x="${x(i)}" y="${H - 4}" text-anchor="middle">${i + 1}º bim.</text>`).join("");
+    return `<div class="mult"><h3>${esc(d)}</h3><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Média por bimestre em ${esc(d)}"><g class="grid">${grid}</g>
+      <line class="seis" x1="${ml}" x2="${W - mr}" y1="${y(6)}" y2="${y(6)}"/><g class="xax">${xax}</g>${linhas}${rot}</svg></div>`;
+  }).join("");
+}
+
+// ---------- prioridades ----------
+function prioridades(lista) {
+  const R = lista.map(a => ({ a, r: resumoAluno(a) })).filter(o => o.r.rec || o.r.aten)
+    .sort((x, y) => y.r.rec - x.r.rec || y.r.peso - x.r.peso || x.a.nome.localeCompare(y.a.nome, "pt-BR"));
+  $("prio-titulo").textContent = `Prioridades (${R.length} ${R.length === 1 ? "estudante" : "estudantes"})`;
+  const LIM = 15, vis = E.prioTodos ? R : R.slice(0, LIM);
+  $("prio").innerHTML = R.length ? vis.map(({ a, r }) => `<div class="prio-row">
+      <div><button class="nome-btn" type="button" data-a="${a.i}">${esc(a.nome)}</button>
+        <span class="resumo">${[r.rec ? `${r.rec} em recuperação` : "", r.aten ? `${r.aten} em atenção` : ""].filter(Boolean).join(" · ")}</span></div>
+      <div class="turma">${esc(D.turmas[a.t].nome)}</div>
+      <div class="chips">${r.casos.map(c => `<span class="chip ${c.st}"><span class="ic ${c.st}" aria-hidden="true">${ICON[c.st]}</span><b>${esc(D.disciplinas[c.d])}</b> precisa ${t1(c.prec)}
+        <span class="tr">· ${c.g.b.map(t1).join(" → ")}</span><span class="sr" hidden>${ROT[c.st]}</span></span>`).join("")}</div></div>`).join("")
+    : `<p class="empty">Nenhum estudante em recuperação ou atenção neste filtro.</p>`;
+  const m = $("prio-mais");
+  m.hidden = R.length <= LIM;
+  m.textContent = E.prioTodos ? `Mostrar só os ${LIM} primeiros` : `Ver todos os ${R.length}`;
+}
+$("prio-mais").addEventListener("click", () => { E.prioTodos = !E.prioTodos; prioridades(alunosFiltro()); });
+document.addEventListener("click", ev => { const b = ev.target.closest("[data-a]"); if (b) ficha(AL.find(a => a.i === +b.dataset.a)); });
+
+// ---------- tabela ----------
+function tabela() {
+  const discs = E.disc === null ? [...Array(ND).keys()] : [E.disc];
+  let lista = alunosFiltro().filter(a => !E.busca || a.busca.includes(E.busca));
+  if (E.risco) lista = lista.filter(a => discs.some(d => ["rec", "aten"].includes(sit(a.g[d]).st)));
+  $("tab-sub").textContent = `${E.regra === 225 ? "22,5" : "24"} − (1º + 2º + 3º); vermelho: acima de 10 (recuperação); amarelo: de 8 a 10; ✓: já garantido`;
+  if (!lista.length) { $("tabela").innerHTML = `<p class="empty">Nenhum estudante com esses filtros.</p>`; return; }
+  const cab = discs.map(d => `<th scope="col">${esc(D.disciplinas[d])}</th>`).join("");
+  const linhas = lista.map(a => {
+    const r = resumoAluno(a);
+    return `<tr><th class="aluno" scope="row"><button class="nome-btn" type="button" data-a="${a.i}">${esc(a.nome)}</button><small>${esc(D.turmas[a.t].nome)} · freq. ${a.f === null ? "–" : n1(a.f) + "%"}</small></th>
+      <td class="q ${r.rec ? "tem" : ""}">${r.rec}</td>` +
+      discs.map(d => { const g = a.g[d], s = sit(g);
+        const tip = `${D.disciplinas[d]}\n1º ${t1(g.b[0])} · 2º ${t1(g.b[1])} · 3º ${t1(g.b[2])} = ${t1(g.s)}\n${s.st === "gar" ? "já alcançou " + tr(E.regra) : "precisa de " + t1(s.prec) + " no 4º"} (${ROT[s.st]})`;
+        return `<td class="n ${s.st}" data-tip="${esc(tip)}">${s.st === "sem" ? "–" : s.st === "gar" ? "✓" : t1(s.prec)}</td>`; }).join("") + `</tr>`;
+  }).join("");
+  $("tabela").innerHTML = `<div class="matrix-box"><table class="matrix"><thead><tr><th class="aluno" scope="col">Estudante</th><th scope="col" title="Disciplinas em recuperação">Em rec.</th>${cab}</tr></thead><tbody>${linhas}</tbody></table></div>
+    <p class="note">${num(lista.length)} estudantes. Passe o mouse numa nota para ver os três bimestres.</p>`;
+}
+
+// ---------- ficha ----------
+function spark(b) {
+  const pts = b.map((v, i) => v === null ? null : [6 + i * 29, 3 + (100 - v) * 16 / 100]).filter(Boolean);
+  return `<svg class="spark" viewBox="0 0 70 22" aria-hidden="true"><line x1="0" x2="70" y1="${3 + 40 * 16 / 100}" y2="${3 + 40 * 16 / 100}"/><polyline points="${pts.map(p => p.join(",")).join(" ")}"/>${pts.map(p => `<circle r="2.2" cx="${p[0]}" cy="${p[1]}"/>`).join("")}</svg>`;
+}
+function ficha(a) {
+  const r = resumoAluno(a);
+  $("ficha-in").innerHTML = `<div class="ficha-head"><div><h2 id="ficha-nome">${esc(a.nome)}</h2>
+      <p>${esc(D.turmas[a.t].nome)} · ${esc(D.turmas[a.t].turno)} · frequência ${a.f === null ? "–" : n1(a.f) + "%"} · ${r.rec ? `${r.rec} em recuperação` : "nenhuma disciplina em recuperação"}${r.aten ? ` · ${r.aten} em atenção` : ""}</p></div>
+      <div class="ficha-acoes"><button class="btn-ghost" type="button" id="f-print">Imprimir</button><button class="btn-ghost" type="button" id="f-close">Fechar</button></div></div>
+    <table><thead><tr><th>Disciplina</th><th class="c">1º</th><th class="c">2º</th><th class="c">3º</th><th class="c">Soma</th><th class="c">Precisa no 4º</th><th>Situação</th><th>Trajetória</th></tr></thead><tbody>` +
+    a.g.map((g, d) => { const s = sit(g);
+      return `<tr class="${s.st}"><td>${esc(D.disciplinas[d])}</td>${g.b.map(v => `<td class="c">${v === null ? "–" : t1(v)}</td>`).join("")}<td class="c">${g.ok ? t1(g.s) : "–"}</td>
+        <td class="c prec">${s.st === "sem" ? "–" : s.st === "gar" ? "–" : t1(s.prec)}</td><td><span class="ic ${s.st === "gar" ? "ok" : s.st}" aria-hidden="true">${ICON[s.st]}</span> ${ROT[s.st]}</td><td>${spark(g.b)}</td></tr>`; }).join("") +
+    `</tbody></table><p class="ficha-pe">Regra: soma dos quatro bimestres de ${tr(E.regra)} pontos${E.regra === 225 ? " (média final arredondada para cima no meio ponto)" : " (sem arredondamento)"}. Recuperação: precisaria de mais de 10 no 4º bimestre. Atenção: precisa de 8 a 10. Dados de ${esc(D.data)}.</p>`;
+  $("f-close").onclick = () => $("ficha").close();
+  $("f-print").onclick = () => { document.body.classList.add("imprimindo"); window.print(); };
+  $("ficha").showModal();
+}
+window.addEventListener("afterprint", () => document.body.classList.remove("imprimindo"));
+$("ficha").addEventListener("click", ev => { if (ev.target === $("ficha")) $("ficha").close(); });
+
+// ---------- conferência ----------
+function conferencia() {
+  if (!D.avisos.length) { $("conf").innerHTML = `<p class="note">Boletins e atas conferem em todas as notas.</p>`; return; }
+  const ata = D.avisos.filter(v => v.tipo === "ata"), outros = D.avisos.filter(v => v.tipo !== "ata");
+  $("conf").innerHTML = (ata.length ? `<p class="sub">Em ${num(ata.length)} notas, a média parcial calculada pelo boletim (soma ÷ 4, arredondada para cima no meio ponto) não bate com a ata. O painel usa o boletim. Vale abrir essas notas no sistema:</p>
+      <ul class="avisos">${ata.map(v => `<li><b>${esc(nomeProprio(v.nome))}</b> (${esc(v.turma)}): ${esc(v.texto)}</li>`).join("")}</ul>` : "") +
+    (outros.length ? `<p class="sub" style="margin-top:.6rem">Outros registros:</p><ul class="avisos">${outros.map(v => `<li><b>${esc(nomeProprio(v.nome))}</b> ${esc(v.texto)}</li>`).join("")}</ul>` : "");
+}
+
+// ---------- tooltip ----------
+const tip = $("tip");
+document.addEventListener("pointerover", ev => { const el = ev.target.closest("[data-tip]"); if (!el) { tip.hidden = true; return; } tip.textContent = el.dataset.tip; tip.hidden = false; });
+document.addEventListener("pointermove", ev => { if (tip.hidden) return;
+  tip.style.left = Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px";
+  tip.style.top = (ev.clientY + 16 + tip.offsetHeight > innerHeight ? ev.clientY - tip.offsetHeight - 10 : ev.clientY + 16) + "px"; });
+document.addEventListener("scroll", () => { tip.hidden = true; }, { passive: true });
+
+function render() {
+  syncFiltros();
+  const lista = alunosFiltro();
+  const R = kpis(lista);
+  insights(lista, R);
+  heat();
+  trajetorias();
+  prioridades(lista);
+  tabela();
+}
+
+// ---------- entrada ----------
+$("login-form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const btn = $("entrar"), erro = $("erro");
+  if (!$("usuario").value) { erro.textContent = "Selecione o usuário."; erro.hidden = false; return; }
+  btn.disabled = true; btn.textContent = "Abrindo…"; erro.hidden = true;
+  try {
+    preparar(await abrir($("senha").value.trim()));
+  } catch (err) {
+    erro.textContent = err.name === "OperationError" ? "Senha incorreta." : `Não foi possível abrir os dados: ${err.message}`;
+    erro.hidden = false; btn.disabled = false; btn.textContent = "Entrar"; $("senha").select(); return;
+  }
+  $("senha").value = "";
+  montarFiltros();
+  conferencia();
+  $("rodape").textContent = `Fonte: boletins escolares e atas exportados do sistema em ${D.data}. ${num(AL.length)} estudantes em ${NT} turmas. A nota necessária considera só as notas do 1º ao 3º bimestre; recuperações paralelas que o boletim não mostre não entram.`;
+  $("login").hidden = true; $("app").hidden = false;
+  render();
+});
+$("sair").addEventListener("click", () => location.reload());
+</script>
+</html>
